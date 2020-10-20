@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
+    <meta content="yes" name="apple-mobile-web-app-capable"/>
+    <meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+    <meta http-equiv="Cache-Control" content="no-transform"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp"/>
+    <meta content="telephone=no" name="format-detection"/>
+    <link rel="shortcut icon" href="/static/images/pic.png" type="image/png"/>
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="">
+    <meta name="keywords" content="ArchLinux, ClarkQAQ, 个人博客, Blog, Code">
+    <title>【探索】利用 canvas 实现数据压缩 - Clark&#39;s Blog</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/strapdown.css">
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <a href="/" class="logo"><img src="/static/images/user-head-image.png" alt="Clark&#39;s Blog"/></a>
+        <div class="description">
+            <h1>Clark&#39;s Blog</h1>
+            <h2>在一个阳光明媚的午后,突然消失,永远消失.</h2>
+            <nav>
+                <div class="bitcron_nav_container">
+                    <div class="bitcron_nav">
+                        <div class="mixed_site_nav_wrap site_nav_wrap">
+                            <ul class="mixed_site_nav site_nav sm sm-base">
+                                <li><a href="/" class="selected active current nav__item">首页</a>
+                                </li>
+
+                            </ul>
+                            <div class="clear clear_nav_inline_end">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clear clear_nav_end">
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+<article class="content">
+
+    <h1>【探索】利用 canvas 实现数据压缩</h1>
+    <div class="meta">
+            <span class="item">日期:<time>2020-06-12</time></span>
+        <span class="item">标签:默认(未实现)</span>
+    </div>
+    <div class="post">
+        <div class="md_block" id="markdown">
+
+        </div>
+    </div>
+    <br />
+    <br />
+</article>
+    <script src="/static/js/strapdown.js"></script>
+    <script>
+		document.getElementById("markdown").innerHTML = "\n###### 来源:https:\/\/www.cnblogs.com\/index-html\/p\/canvas_data_compress.html\n### 前言\n\nHTTP 支持 GZip 压缩，可节省不少传输资源。但遗憾的是，只有下载才有，上传并不支持。如果上传也能压缩，那就完美了。特别适合大量文本提交的场合，比如博客园，就是很好的例子。\n\n虽然标准不支持「上传压缩」，但仍可以自己来实现。\n#### Flash\n\n首选方案当然是 Flash，毕竟它提供了压缩 API。除了 zip 格式，还支持 lzma 这种超级压缩。因为是原生接口，所以性能极高。而且对应的 swf 文件，也非常小。\n#### JavaScript\n\nFlash 逐渐淘汰，但取而代之的 HTML5，却没有提供压缩 API。只能自己用 JS 实现。\n\n这虽然可行，但运行速度就慢多了，而且相应的 JS 也很大。如果代码有 50kb，而数据压缩后只小 10kb，那就不值了。除非量大，才有意义。\n其他\n\n能否不用 JS，而是利用某些接口，间接实现压缩？事实上，在 HTML5 刚出现时，就注意到了一个功能：canvas 导出图片。可以生成 JPG、PNG 等格式。\n\n如果在思考的话，相信你也想到了。没错，就是 PNG —— 它是无损压缩的图片格式。我们把普通数据当成像素点，画到 canvas 上，然后导出成 PNG，不就是一个特殊的压缩包了吗！\n\n下面开始探索。。。\n#### 编码\n\n数据转像素，并不麻烦。1 个像素可以容纳 4 个字节：\n```javascript\nR = bytes[0]\nG = bytes[1]\nB = bytes[2]\nA = bytes[3]\n```\n事实上有现成的方法，可批量将数据填充成像素：\n```javascript\nvar img = new ImageData(bytes, w, h);\ncontext.putImageData(img, 0, 0);\n```\n但是，图片的宽高如何设定？\n尺寸\n\n最简单的，就是用 1px 的高度。比如有 1000 个像素，则填在 1000 x 1 的图片里。\n\n但如果有 10000 像素，就不可行了。因为 canvas 的尺寸，是有限制的。\n\n不同的浏览器，最大尺寸不一样。有 4096 的，也有 32767 的。。。\n\n以最大 4096 为例，如果每次都用这个宽度，显然不合理。\n\n比如有 n = 4100 个像素，我们使用 4096 x 2 的尺寸：\n\n| 1    | 2    | 3    | 4    | ...  | 4095 | 4096 |\n| 4097 | 4098 | 4099 | 4100 | ...... 未利用 ......\n\n第二行只用到 4 个，剩下的 4092 个都空着了。\n\n但 4100 = 41 * 100。如果用这个尺寸，就不会有浪费。\n\n所以，得对 n 分解因数：\n\nn = w * h\n\n这样就能将 n 个像素，正好填满 w x h 的图片。\n\n但 n 是质数的话，就无解了。这时浪费就不可避免了，只是，怎样才能浪费最少？\n\n于是就变成这样一个问题：\n\n   如何用 n \x2b m 个点，拼成一个矩形。求矩形的 w 和 h。（n 已知，m 越小越好，0 \x3c w \x3c= MAX, 0 \x3c h \x3c= MAX）\n\n考虑到 MAX 不大，穷举就可以。\n\n我们遍历 h，计算相应的 w = ceil(n \/ h)， 然后找出最接近 n 的 w * h。\n```javascript\nvar MAX = 4096;\nvar beg = Math.ceil(n \/ MAX);\nvar end = Math.ceil(Math.sqrt(n));\n\nvar minSize = 9e9;\n\nvar bestH = 0,          \/\/ 最终结果\n    bestW = 0;\n\nfor (h = beg; h \x3c= end; h\x2b\x2b) {\n    var w = Math.ceil(n \/ h);\n    var size = w * h;\n\n    if (size \x3c minSize) {\n        minSize = size;\n        bestW = w;\n        bestH = h;\n    }\n    if (size == n) {\n        break;\n    }\n}\n```\n因为 w * h 和 h * w 是一样的，所以只需遍历到 sqrt(n) 就可以。\n\n同样，也无需从 1 开始，从 n \/ MAX 即可。\n\n这样，我们就能找到最适合的图片尺寸。\n\n   当然，连续的空白像素，最终压缩后会很小。这一步其实并不特别重要。\n\n#### 渲染\n\n定下尺寸，我们就可以「渲染数据」了。\n\n渲染看似简单，然而事实上却有个意想不到的坑 —— 同个像素写入后再读取，数据居然会有偏差！这里有个测试：\n```javascript\nvar canvas = document.createElement(\x27canvas\x27);\nvar ctx = canvas.getContext(\x272d\x27);\n\n\/\/ 写入的数据\nvar bytes = [100, 101, 102, 103];\n\nvar buf = new Uint8ClampedArray(bytes);\nvar img = new ImageData(buf, 1, 1);\nctx.putImageData(img, 0, 0);\n\n\/\/ 读取的数据\nimg = ctx.getImageData(0, 0, 1, 1);\nconsole.log(img.data);\n\n\/\/ 期望     [100, 101, 102, 103]\n\/\/ 实际\n\/\/ chrome  [99,  102, 102, 103]\n\/\/ firefox [101, 101, 103, 103]\n\/\/ ...\n```\n读取的值和写入的很接近，但并不相同。而且不同的浏览器，偏差还不一样！这究竟是怎么回事？\n\n原来，浏览器为了提高渲染性能，有一个 Premultiplied Alpha 的机制。但是，这会牺牲一些精度！虽然视觉上并不明显，但用于数据存储，就有问题了。\n\n如何禁用它？一番尝试都没成功。于是，只能从数据上琢磨。如果不使用 Alpha 通道，又会怎样？\n```javascript\n\/\/ 写入的数据\nvar bytes = [100, 101, 102, 255];\n...\nconsole.log(img.data);  \/\/ [100, 101, 102, 255]\n\n设置 A = 255，这样倒是避开了问题。\n\n看来，只能从数据上着手，跳过 Alpha 通道：\n\n\/\/ pixel 1\nnew_bytes[0] = bytes[0]     \/\/ R\nnew_bytes[1] = bytes[1]     \/\/ G\nnew_bytes[2] = bytes[2]     \/\/ B\nnew_bytes[3] = 255          \/\/ A\n\n\/\/ pixel 2\nnew_bytes[4] = bytes[3]     \/\/ R\nnew_bytes[5] = bytes[4]     \/\/ G\nnew_bytes[6] = bytes[5]     \/\/ B\nnew_bytes[7] = 255          \/\/ A\n\n...\n```\n这时，就不受 Premultiplied Alpha 的影响了。\n\n出于简单，也可以 1 像素存 1 字节：\n```javascript\n\/\/ pixel 1\nnew_bytes[0] = bytes[0]\nnew_bytes[1] = 255\nnew_bytes[2] = 255\nnew_bytes[3] = 255\n\n\/\/ pixel 2\nnew_bytes[4] = bytes[1]\nnew_bytes[5] = 255\nnew_bytes[6] = 255\nnew_bytes[7] = 255\n\n...\n```\n这样，整个图片最多只有 256 色。如果能导出成「索引型 PNG」的话，也是可以尝试的。\n#### 解码\n\n最后，就是将图像导出成可传输的数据。如果 canvas 能直接导出成 blob，那是最好的，因为 blob 可通过 AJAX 上传。\n```javascript\ncanvas.toBlob(function(blob) {\n    \/\/ ...\n}, \x27image\/png\x27)\n```\n不过，大多浏览器都不支持，只能导出 data uri 格式：\n```javascript\nuri = canvas.toDataURL(\x27image\/png\x27)  \/\/ data:image\/png;base64,xxxx\n```\n然而 base64 会增加 1\/3 的长度，这样压缩效果就大幅降低了。所以，我们还得解码成二进制：\n```javascript\nbase64 = uri.substr(uri.indexOf(\x27,\x27) \x2b 1)\nbinary = atob(base64)\n```\n这时的 binary，就是最终想要的数据了吗？如果将 binary 通过 AJAX 提交的话，会发现实际传输字节，会比 binary.length 大！\n\n原来 atob 函数返回的数据，仍是字符串型的，所以传输时会涉及到字集编码。因此我们还需再转换一次，变成真正的二进制类型：\n```javascript\nvar len = binary.length\nvar buf = new Uint8Array(len)\n\nfor (var i = 0; i \x3c len; i\x2b\x2b) {\n    buf[i] = binary.charCodeAt(i)\n}\n```\n这时的 buf，才能被 AJAX 原封不动的传输。\n#### 演示\n\n综上所述，我们简单演示下：https:\/\/www.etherdream.com\/FunnyScript\/jszip\/encode.html\n```html\n\x3chtml\x3e\n\x3chead\x3e\n  \x3ctitle\x3ePNG 压缩数据\x3c\/title\x3e\n  \x3cmeta charset=\x22utf-8\x22 \/\x3e\n  \x3cstyle\x3e\n    #txtContent {\n      width: 800px;\n      height: 300px;\n    }\n    #txtResult {\n      width: 800px;\n      height: 100px;\n    }\n\n    canvas {\n      border: 2px solid #000;\n    }\n  \x3c\/style\x3e\n\x3c\/head\x3e\n\x3cbody\x3e\n  \x3cdiv\x3e\n    \x3cspan\x3e压缩文字：\x3c\/span\x3e\n    \x3ca href=\x22javascript:load(\x27t1.txt\x27)\x22\x3e测试内容\x3c\/a\x3e\n  \x3c\/div\x3e\n  \x3cdiv\x3e\n    \x3ctextarea id=\x22txtContent\x22\x3e\x3c\/textarea\x3e\n  \x3c\/div\x3e\n  \x3cdiv\x3e\n    \x3cspan\x3e编码方式：\x3c\/span\x3e\n    \x3cselect id=\x22selEncType\x22\x3e\n      \x3coption value=\x221px_1byte\x22\x3e每像素 1 字节\x3c\/option\x3e\n      \x3coption value=\x221px_3byte\x22\x3e每像素 3 字节\x3c\/option\x3e\n    \x3c\/select\x3e\n    \x3cbutton id=\x22btnCompress\x22\x3e压缩\x3c\/button\x3e\n  \x3c\/div\x3e\n  \x3cdiv\x3e\n    \x3ctextarea id=\x22txtResult\x22 readonly\x3e\x3c\/textarea\x3e\n  \x3c\/div\x3e\n  \x3cscript\x3e\n    function find_best_size(pixelCount) {\n      \/\/ canvas max width or height\n      var MAX_L = 4096;\n\n      var sqrt = Math.ceil(Math.sqrt(pixelCount));\n      if (sqrt \x3e MAX_L) {\n        return null;\n      }\n\n      var minL = Math.ceil(pixelCount \/ MAX_L);\n      var minS = 1e9;\n      var bestH = 0, bestW = 0;\n\n      for (var h = minL; h \x3c= sqrt; h\x2b\x2b) {\n        var w = Math.ceil(pixelCount \/ h);\n        var size = w * h;\n        if (size \x3c minS) {\n          minS = size;\n          bestW = w;\n          bestH = h;\n        }\n        if (size == pixelCount) {\n          break;\n        }\n      }\n      return {w: bestW, h: bestH};\n    }\n\n\n    function str_to_bytes(str) {\n      var len = str.length;\n      var buf = new Uint8Array(len);\n\n      for (var i = 0; i \x3c len; i\x2b\x2b) {\n        buf[i] = str.charCodeAt(i);\n      }\n      return buf;\n    }\n\n\n    \/\/ 每像素存 1 字节\n    function encode_1px_1byte(bytes) {\n      var count = bytes.length;\n      var size = find_best_size(count);\n\n      var buffer = new ArrayBuffer(size.w * size.h * 4);\n      var u32Ptr = new Uint32Array(buffer);\n\n      \/\/ R: bytes[i], G: FF, B: FF, A: FF\n\n      for (var i = 0; i \x3c count; i\x2b\x2b) {\n        u32Ptr[i] = bytes[i] | 0xFFFFFF00;  \/\/ 0xAABBGGRR\n      }\n\n      var u8Ptr = new Uint8ClampedArray(buffer);\n      return new ImageData(u8Ptr, size.w, size.h);\n    }\n\n\n    \/\/ 每像素存 3 字节\n    function encode_1px_3byte(bytes) {\n      var count = Math.ceil(bytes.length \/ 3);\n      var size = find_best_size(count);\n\n      var buffer = new ArrayBuffer(size.w * size.h * 4);\n      var u32Ptr = new Uint32Array(buffer);\n\n      \/\/ R: bytes[i], G: bytes[i\x2b1], B: bytes[i\x2b2], A: FF\n\n      \/\/ 数组越界返回 undefined，位运算时当做 0\n      for (var i = 0, j = 0; i \x3c count; i\x2b\x2b, j \x2b= 3) {\n        u32Ptr[i] =             \/\/ 0xAABBGGRR\n          bytes[j \x2b 0] \x3c\x3c  0 |  \/\/ R \n          bytes[j \x2b 1] \x3c\x3c  8 |  \/\/ G\n          bytes[j \x2b 2] \x3c\x3c 16 |  \/\/ B\n          0xFF000000;           \/\/ A\n      }\n\n      var u8Ptr = new Uint8ClampedArray(buffer);\n      return new ImageData(u8Ptr, size.w, size.h);\n    }\n\n    var ENCODE_TYPE = {\n      \x271px_3byte\x27: encode_1px_3byte,\n      \x271px_1byte\x27: encode_1px_1byte\n    };\n\n\n    function compress(bytes, type, callback) {\n      var fn = ENCODE_TYPE[type];\n      var img = fn(bytes);\n\n      var canvas = document.createElement(\x27canvas\x27);\n      canvas.width = img.width;\n      canvas.height = img.height;\n      canvas.getContext(\x272d\x27).putImageData(img, 0, 0);\n\n      if (canvas.toBlob) {    \/\/ fast way\n        canvas.toBlob(callback, \x27image\/png\x27);\n      } else {\n        \/\/ canvas to base64\n        var uri = canvas.toDataURL(\x27image\/png\x27);\n        var base64 = uri.substr(uri.indexOf(\x27,\x27) \x2b 1);\n\n        \/\/ base64 to binStr\n        var binStr = atob(base64);\n\n        \/\/ binStr to uint8[]\n        var bytes = str_to_bytes(binStr);\n\n        callback(bytes);\n      }\n\n      \/\/ for test\n      document.body.appendChild(canvas);\n    }\n\n\n\n    \/\/ ------------------------------\n    \/\/ 测试代码\n    \/\/ ------------------------------\n    btnCompress.onclick = function() {\n      var text = txtContent.value;\n      if (!text) {\n        return;\n      }\n\n      var txt_bytes = utf8_to_bytes(text);\n      var enc_type = selEncType.options[selEncType.selectedIndex].value;\n      var tick = Date.now();\n\n      compress(txt_bytes, enc_type, function(result) {\n        \/\/ blob or Uint8Array\n        var png_len = result.length || result.size;\n\n        var log =\n          \x27编码方式：\x27 \x2b enc_type \x2b \x27\\n\x27 \x2b\n          \x27压缩前：\x27 \x2b txt_bytes.length \x2b \x27 字节\\n\x27 \x2b\n          \x27压缩后：\x27 \x2b png_len \x2b \x27 字节\\n\x27 \x2b\n          \x27压缩率：\x27 \x2b (png_len \/ txt_bytes.length * 100).toFixed(1) \x2b \x27%\\n\x27 \x2b\n          \x27耗时：\x27 \x2b (Date.now() - tick) \x2b \x27ms\x27;\n\n        console.log(log);\n        txtResult.value = log;\n      });\n    }\n\n    function utf8_to_bytes(str) {\n      var buf = [];\n      var i = 0, j = 0;\n\n      var esc = encodeURI(str);\n      var n = esc.length;\n      while (i \x3c n) {\n        var ch = esc.charCodeAt(i);\n        if (ch == 37) {   \/\/ \x27%\x27\n          var hex = esc.substr(i \x2b 1, 2);\n          ch = parseInt(hex, 16);\n          i \x2b= 3;\n        } else {\n          i\x2b\x2b;\n        }\n        buf[j\x2b\x2b] = ch;\n      }\n      return buf;\n    }\n\n    function load(f) {\n      var xhr = new XMLHttpRequest();\n      xhr.open(\x27GET\x27, f, true);\n      xhr.send();\n      xhr.onload = function() {\n        txtContent.value = xhr.responseText;\n      };\n    }\n\n\n    if (!window.Uint8ClampedArray) {\n      alert(\x27当前浏览器不支持\x27)\n    }\n  \x3c\/script\x3e\n\x3c\/body\x3e\n\x3c\/html\x3e\n\n```\n\n\n\n找一个大块的文本测试。例如 qq.com 首页 HTML，有 637,101 字节。\n\n先使用「每像素 1 字节」的编码，各个浏览器生成的 PNG 大小：\nChrome \tFireFox \tSafari\n体积 \t289,460 \t203,276 \t478,994\n比率 \t45.4% \t31.9% \t75.2%\n\n其中火狐压缩率最高，减少了 2\/3 的体积。生成的 PNG 看起来是这样的：\n\n![](\/uploads\/cv_blog\/images\/m_0f5089105e7dc53056fe82dd9f2e09b7_r.png)\n\n\x3e 不过遗憾的是，所有浏览器生成的图片，都不是「256 色索引」的。\n\n再测试「每像素 3 字节」，看看会不会有改善：\nChrome \tFireFox \tSafari\n体积 \t297,239 \t202,785 \t384,183\n比率 \t46.7% \t31.8% \t60.3%\n\nSafari 有了不少的进步，不过 Chrome 却更糟了。\n\nFireFox 有略微的提升，压缩率仍是最高的。生成如下图片：\n\n![](\/uploads\/cv_blog\/images\/m_1cebcd38d838ddea63f471e9ce483d9b_r.png)\n\n#### 结论\n\n由于 canvas 导出图片时，无法设置压缩等级，而默认的压缩率并不高。所以这种方式，最终效果并不理想。\n\n同样的数据，相比 Flash 压缩，差距就很明显了：\ndeflate 算法 \tlzma 算法\n体积 \t133,660 \t108,015\n比率 \t21.0% \t17.0%\n\n并且 Flash 生成的是通用格式，后端解压时，使用标准库即可；而 PNG 还得位图解码、像素处理等步骤，很麻烦。\n\n所以，现实中还是优先使用 Flash，本文只是开脑洞而已。\n用例\n\n虽然是个然并卵的黑科技，不过实际还是有用到过，曾用在一个较大日志上传的场合（并且不能用 Flash）。\n\n好在后端仅仅储存而已，并不分析。所以，可以让管理员将日志对应的 PNG 图片下回本地，在自己电脑上解析。\n\n解压更容易，就是将像素还原回数据，这里有个简陋的 Demo：https:\/\/www.etherdream.com\/FunnyScript\/jszip\/decode.html\n\n```html\n\x3c!doctype html\x3e\n\x3chtml\x3e\n\x3chead\x3e\n  \x3ctitle\x3ePNG 数据解压\x3c\/title\x3e\n  \x3cmeta charset=\x22utf-8\x22 \/\x3e\n  \x3cstyle\x3e\n    #txtURL {\n      width: 500px;\n    }\n    #txtResult {\n      width: 600px;\n      height: 300px;\n    }\n  \x3c\/style\x3e\n\x3c\/head\x3e\n\x3cbody\x3e\n  \x3cdiv\x3e\n    图片 URL：\x3cinput id=\x22txtURL\x22 type=\x22text\x22 value=\x22https:\/\/i.loli.net\/2017\/12\/13\/5a30dac33eca1.png\x22\x3e\n    \x3cbutton id=\x22btnLoad\x22\x3e加载\x3c\/button\x3e\n  \x3c\/div\x3e\n  \x3cdiv\x3e\n    \x3ctextarea id=\x22txtResult\x22\x3e\x3c\/textarea\x3e\n  \x3c\/div\x3e\n  \x3cdiv id=\x22imgBox\x22\x3e\n    图片预览：\n  \x3c\/div\x3e\n  \x3cscript\x3e\n    function uncompress(img) {\n      var w = img.width;\n      var h = img.height;\n\n      var canvas = document.createElement(\x27canvas\x27);\n      canvas.width = w;\n      canvas.height = h;\n\n      var ctx = canvas.getContext(\x272d\x27);\n      ctx.drawImage(img, 0, 0);\n\n      var imgData = ctx.getImageData(0, 0, w, h);\n      var buf = imgData.data.buffer;\n\n      \/\/ FIX: remove padding\n      return decode_1px_3byte(buf);\n    }\n\n\n    function decode_1px_3byte(buf) {\n      var u32 = new Uint32Array(buf);\n      var len = u32.length;\n      var ret = new Uint8Array(len * 3);\n      var p = 0;\n\n      for (var i = 0; i \x3c len; i\x2b\x2b) {\n        var rgba = u32[i];\n        ret[p\x2b\x2b] = rgba;\n        ret[p\x2b\x2b] = rgba \x3e\x3e  8 \x26 0xff;\n        ret[p\x2b\x2b] = rgba \x3e\x3e 16 \x26 0xff;\n      }\n      return ret;\n    }\n\n\n    btnLoad.onclick = function() {\n      btnLoad.disabled = true;\n      txtResult.value = \x27loading...\x27;\n\n      var img = new Image();\n\n      \/\/ debug\n      imgBox.appendChild(img);\n\n      img.onload = function() {\n        btnLoad.disabled = false;\n\n        var bytes = uncompress(img);\n        var dec = new TextDecoder();\n        txtResult.value = dec.decode(bytes);\n      };\n\n      img.onerror = function() {\n        btnLoad.disabled = false;\n        txtResult.value = \x27load error!\x27;\n      };\n\n      img.crossOrigin = true;\n      img.referrerPolicy = \x27no-referrer\x27;\n      img.src = txtURL.value;\n    };\n  \x3c\/script\x3e\n\x3c\/body\x3e\n\x3c\/html\x3e\n\n```\n\n\n\n\n这样，既减少了上传流量，也节省服务器存储空间。 \n";
+		markdown("markdown");
+	</script>
+</main>
+</div>
+    <footer>
+        <span>ClarkQAQ - ♥</span>
+        <div>友情链接:
+        <a href="http://blog.claraqwq.com/" target="_blank" title="ClaraQWQ的博客">Clara</a>
+		</div>
+        <div class="powered_by">
+            <span>© CopyRight</span>
+            <a href="http://clarkabe.top" target="_blank">ClarkQAQ</a>
+            <a href="#" target="_blank">Fantasy</a>
+        </div>
+        <div class="footer_slogan">
+        </div>
+    </footer>
+
+    <script>
+		(function() {
+			var OriginTitle = document.title;
+			var titleTime;
+			document.addEventListener('visibilitychange', function () {
+				if (document.hidden) {
+					document.title = "喔唷,崩溃啦!";
+					clearTimeout(titleTime);
+				}else {
+					document.title = "诶!=w=又好了!";
+					titleTime = setTimeout(function () {
+						document.title = OriginTitle;
+					}, 2000);
+				}
+			});
+		 }());
+    </script>
+</body>
+</html>

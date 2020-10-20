@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
+    <meta content="yes" name="apple-mobile-web-app-capable"/>
+    <meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+    <meta http-equiv="Cache-Control" content="no-transform"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp"/>
+    <meta content="telephone=no" name="format-detection"/>
+    <link rel="shortcut icon" href="/static/images/pic.png" type="image/png"/>
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="">
+    <meta name="keywords" content="ArchLinux, ClarkQAQ, 个人博客, Blog, Code">
+    <title>Underblog (Golang 写的静态博客引擎) - Clark&#39;s Blog</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/strapdown.css">
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <a href="/" class="logo"><img src="/static/images/user-head-image.png" alt="Clark&#39;s Blog"/></a>
+        <div class="description">
+            <h1>Clark&#39;s Blog</h1>
+            <h2>在一个阳光明媚的午后,突然消失,永远消失.</h2>
+            <nav>
+                <div class="bitcron_nav_container">
+                    <div class="bitcron_nav">
+                        <div class="mixed_site_nav_wrap site_nav_wrap">
+                            <ul class="mixed_site_nav site_nav sm sm-base">
+                                <li><a href="/" class="selected active current nav__item">首页</a>
+                                </li>
+
+                            </ul>
+                            <div class="clear clear_nav_inline_end">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clear clear_nav_end">
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+<article class="content">
+
+    <h1>Underblog (Golang 写的静态博客引擎)</h1>
+    <div class="meta">
+            <span class="item">日期:<time>1970-01-01</time></span>
+        <span class="item">标签:默认(未实现)</span>
+    </div>
+    <div class="post">
+        <div class="md_block" id="markdown">
+
+        </div>
+    </div>
+    <br />
+    <br />
+</article>
+    <script src="/static/js/strapdown.js"></script>
+    <script>
+		document.getElementById("markdown").innerHTML = "\n\n原项目github地址:https:\/\/github.com\/freetonik\/underblog\n\n对他进行了一番魔改.....暂时还没上传.....\n\n\nAn extremely simple, fast static blog generator.\n\n## Deploy to Netlify\n\n[![Deploy to Netlify](https:\/\/www.netlify.com\/img\/deploy\/button.svg)](https:\/\/app.netlify.com\/start\/deploy?repository=https:\/\/github.com\/lucas-deangelis\/underblog-template)\n\n## Install locally\n\nOn MacOS:\n\n```\nbrew install freetonik\/tap\/underblog\n```\n\nDocker:\n\n```\ndocker run --rm -it -v \/path\/to\/your\/blog:\/blog freetonik\/underblog\n```\n\nWindows:\n\nGo to [releases](https:\/\/github.com\/freetonik\/underblog\/releases) and download the latest binary marked \x22windows\x22.\n\n## How it works\n\nYou only need 4 things:\n\n1. `index.html` template for blog\x27s index page.\n2. `post.html` template for single post.\n3. `css\/styles.css` for CSS styles.\n3. `markdown` folder.\n\nThere is no front-matter. **Date** and **slug** are derived from the filename. **Title** is derived from the first line of markdown file. Make sure the first line starts with `#`.\n\n**Step 1:** create the following folder structure:\n\n```\n.\n├── css\n│   └── styles.css\n├── markdown\n│   └── YYYY-MM-DD-Slug_1.md\n│   └── YYYY-MM-DD-Slug_2.md\n│   └── YYYY-MM-DD-Slug_3.md\n├── index.html\n├── post.html\n```\n\n(See [\/example](example))\n\n**Step 2:** run `underblog`.\n\n**Step 3:** Your site is generated in `public`.\n\n## Live preview\n\nRun underblog in watch mode:\n\n```\nunderblog -watch\n```\n\nThen go to http:\/\/localhost:8080\/. Changing markdown files will automatically re-generate the site.\n\n## Features\n\n- NO front matter\n- NO themes\n- NO JavaScript\n- NO tags, categories, taxonomy\n- NO template lookup logic\n- NO plugins\n- NO dependencies\n\n## Roadmap\n\n- [x] derive dates from filenames\n- [ ] RSS generation\n- [ ] Syntax highlighting for code with Chroma\n- [x] live preview server\n\n---\n\n## Building\n\nIn the root repository do:\n\n`make build`\n";
+		markdown("markdown");
+	</script>
+</main>
+</div>
+    <footer>
+        <span>ClarkQAQ - ♥</span>
+        <div>友情链接:
+        <a href="http://blog.claraqwq.com/" target="_blank" title="ClaraQWQ的博客">Clara</a>
+		</div>
+        <div class="powered_by">
+            <span>© CopyRight</span>
+            <a href="http://clarkabe.top" target="_blank">ClarkQAQ</a>
+            <a href="#" target="_blank">Fantasy</a>
+        </div>
+        <div class="footer_slogan">
+        </div>
+    </footer>
+
+    <script>
+		(function() {
+			var OriginTitle = document.title;
+			var titleTime;
+			document.addEventListener('visibilitychange', function () {
+				if (document.hidden) {
+					document.title = "喔唷,崩溃啦!";
+					clearTimeout(titleTime);
+				}else {
+					document.title = "诶!=w=又好了!";
+					titleTime = setTimeout(function () {
+						document.title = OriginTitle;
+					}, 2000);
+				}
+			});
+		 }());
+    </script>
+</body>
+</html>

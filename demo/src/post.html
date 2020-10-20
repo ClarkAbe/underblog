@@ -1,0 +1,105 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
+    <meta content="yes" name="apple-mobile-web-app-capable"/>
+    <meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+    <meta http-equiv="Cache-Control" content="no-transform"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp"/>
+    <meta content="telephone=no" name="format-detection"/>
+    <link rel="shortcut icon" href="/static/images/pic.png" type="image/png"/>
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="">
+    <meta name="keywords" content="ArchLinux, ClarkQAQ, 个人博客, Blog, Code">
+    <title>{{ .Title }} - Clark&#39;s Blog</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/strapdown.css">
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <a href="/" class="logo"><img src="/static/images/user-head-image.png" alt="Clark&#39;s Blog"/></a>
+        <div class="description">
+            <h1>Clark&#39;s Blog</h1>
+            <h2>在一个阳光明媚的午后,突然消失,永远消失.</h2>
+            <nav>
+                <div class="bitcron_nav_container">
+                    <div class="bitcron_nav">
+                        <div class="mixed_site_nav_wrap site_nav_wrap">
+                            <ul class="mixed_site_nav site_nav sm sm-base">
+                                <li><a href="/" class="selected active current nav__item">首页</a>
+                                </li>
+<!--
+                                <li><a href="/archive" class=" nav__item">归档</a></li>
+                                <li><a href="/admin" class=" nav__item">管理</a></li>
+-->
+                            </ul>
+                            <div class="clear clear_nav_inline_end">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clear clear_nav_end">
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+<article class="content">
+
+    <h1>{{ .Title }}</h1>
+    <div class="meta">
+            <span class="item">日期:<time>{{ .Date.Format "2006-01-02" }}</time></span>
+        <span class="item">标签:默认(未实现)</span>
+    </div>
+    <div class="post">
+        <div class="md_block" id="markdown">
+
+        </div>
+    </div>
+    <br />
+    <br />
+</article>
+    <script src="/static/js/strapdown.js"></script>
+    <script>
+		document.getElementById("markdown").innerHTML = "{{ .Body }}";
+		markdown("markdown");
+	</script>
+</main>
+</div>
+    <footer>
+        <span>ClarkQAQ - ♥</span>
+        <div>友情链接:
+        <a href="http://blog.claraqwq.com/" target="_blank" title="ClaraQWQ的博客">Clara</a>
+		</div>
+        <div class="powered_by">
+            <span>© CopyRight</span>
+            <a href="http://clarkabe.top" target="_blank">ClarkQAQ</a>
+            <a href="#" target="_blank">Fantasy</a>
+        </div>
+        <div class="footer_slogan">
+        </div>
+    </footer>
+
+    <script>
+		(function() {
+			var OriginTitle = document.title;
+			var titleTime;
+			document.addEventListener('visibilitychange', function () {
+				if (document.hidden) {
+					document.title = "喔唷,崩溃啦!";
+					clearTimeout(titleTime);
+				}else {
+					document.title = "诶!=w=又好了!";
+					titleTime = setTimeout(function () {
+						document.title = OriginTitle;
+					}, 2000);
+				}
+			});
+		 }());
+    </script>
+</body>
+</html>

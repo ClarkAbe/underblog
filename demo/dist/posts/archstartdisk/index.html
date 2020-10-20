@@ -1,0 +1,102 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" name="viewport"/>
+    <meta content="yes" name="apple-mobile-web-app-capable"/>
+    <meta content="black" name="apple-mobile-web-app-status-bar-style"/>
+    <meta http-equiv="Cache-Control" content="no-transform"/>
+    <meta http-equiv="Cache-Control" content="no-siteapp"/>
+    <meta content="telephone=no" name="format-detection"/>
+    <link rel="shortcut icon" href="/static/images/pic.png" type="image/png"/>
+    <meta name="renderer" content="webkit">
+    <meta name="description" content="">
+    <meta name="keywords" content="ArchLinux, ClarkQAQ, 个人博客, Blog, Code">
+    <title>archlinux开机自动挂载磁盘 - Clark&#39;s Blog</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link rel="stylesheet" href="/static/css/strapdown.css">
+</head>
+<body>
+<div class="wrapper">
+    <header>
+        <a href="/" class="logo"><img src="/static/images/user-head-image.png" alt="Clark&#39;s Blog"/></a>
+        <div class="description">
+            <h1>Clark&#39;s Blog</h1>
+            <h2>在一个阳光明媚的午后,突然消失,永远消失.</h2>
+            <nav>
+                <div class="bitcron_nav_container">
+                    <div class="bitcron_nav">
+                        <div class="mixed_site_nav_wrap site_nav_wrap">
+                            <ul class="mixed_site_nav site_nav sm sm-base">
+                                <li><a href="/" class="selected active current nav__item">首页</a>
+                                </li>
+
+                            </ul>
+                            <div class="clear clear_nav_inline_end">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="clear clear_nav_end">
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+<article class="content">
+
+    <h1>archlinux开机自动挂载磁盘</h1>
+    <div class="meta">
+            <span class="item">日期:<time>2020-06-12</time></span>
+        <span class="item">标签:默认(未实现)</span>
+    </div>
+    <div class="post">
+        <div class="md_block" id="markdown">
+
+        </div>
+    </div>
+    <br />
+    <br />
+</article>
+    <script src="/static/js/strapdown.js"></script>
+    <script>
+		document.getElementById("markdown").innerHTML = "\n###### 来源:https:\/\/blog.hellojukay.cn\/2018\/03\/28\/20180401\/\n###### Tag: #Linux #系统知识 #磁盘\n\n我的这台archlinux的主板上接了一个2TB的硬盘，每次开机启动他斗没有自动挂载上来，我总是在自己需要使用这硬盘的时候来手动挂载他，这样太不方便了，我想能不能在开机的时候自动来挂载这个块硬盘。解决这个问题的方法是有的，往\/etc\/fstab这个文件的后面加入的分区信息和挂载点\n\n```\n[hellojukay@archlinux ~]$ cat \/etc\/fstab \n# Static information about the filesystems.\n# See fstab(5) for details.\n\n# \x3cfile system\x3e \x3cdir\x3e \x3ctype\x3e \x3coptions\x3e \x3cdump\x3e \x3cpass\x3e\n# \/dev\/sda3\nUUID=e3a426e2-4713-4b33-ad6c-773bf144081c\t\/         \text4      \trw,relatime,data=ordered\t0 1\n\n# \/dev\/sda1\nUUID=1b43aa57-22fc-4af2-8a84-cd8f6e27e8f2\t\/boot     \text4      \trw,relatime,data=ordered\t0 2\n\n# \/dev\/sda5\nUUID=2d6bde7f-b18c-44e1-8036-8ecdd93c13c1\t\/home     \text4      \trw,relatime,data=ordered\t0 2\n\n# \/dev\/sda2\nUUID=6bbfba42-07ec-479a-b9fa-d3e89e94af9f\tnone      \tswap      \tdefaults,pri=-2\t0 0\n```\n\n这个需要知道的分区的UUID,使用blkid命令能看到分区的id，一下是我的挂载的情况\n```\n[hellojukay@archlinux ~]$ sudo lsblk\nNAME   MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT\nsda      8:0    0 111.8G  0 disk \n├─sda1   8:1    0   100M  0 part \/boot\n├─sda2   8:2    0    20G  0 part [SWAP]\n├─sda3   8:3    0    50G  0 part \/\n├─sda4   8:4    0     1K  0 part \n└─sda5   8:5    0    10G  0 part \/home\nsdb      8:16   0   1.8T  0 disk \n└─sdb1   8:17   0   1.8T  0 part \/data\nsr0     11:0    1 127.5M  0 rom  \/run\/media\/hellojukay\/TP-LINK\n[hellojukay@archlinux ~]$\n```\n\n这个的磁盘sdb就是我的那个2TB的磁盘，他没有被挂载在任何目录下，我们来看下\/dev\/sdb1的UUID.\n```\n[hellojukay@archlinux ~]$ sudo blkid  \/dev\/sdb1\n\/dev\/sdb1: PARTUUID=\x220cfc53f7-01\x22\n[hellojukay@archlinux ~]$\n```\n\n这里的sdb就是我需要挂载的外置因盘，我们来看一下他的分区的UUID,\n```\n[hellojukay@archlinux blog]$ sudo blkid \/dev\/sdb1\n\/dev\/sdb1: UUID=\x227d546d07-1049-4a4a-92a4-152d1c7ba854\x22 TYPE=\x22ext4\x22 PARTUUID=\x220cfc53f7-01\x22\n```\n\n这里看到了，sdb1的UUID了，只需要他他写入到\/etc\/fstab重，开启启动就会自动挂载的\n```\n[hellojukay@archlinux blog]$ cat \/etc\/fstab \n# Static information about the filesystems.\n# See fstab(5) for details.\n\n# \x3cfile system\x3e \x3cdir\x3e \x3ctype\x3e \x3coptions\x3e \x3cdump\x3e \x3cpass\x3e\n# \/dev\/sda3\nUUID=e3a426e2-4713-4b33-ad6c-773bf144081c\t\/         \text4      \trw,relatime,data=ordered\t0 1\n\n# \/dev\/sda1\nUUID=1b43aa57-22fc-4af2-8a84-cd8f6e27e8f2\t\/boot     \text4      \trw,relatime,data=ordered\t0 2\n\n# \/dev\/sda5\nUUID=2d6bde7f-b18c-44e1-8036-8ecdd93c13c1\t\/home     \text4      \trw,relatime,data=ordered\t0 2\n\n# \/dev\/sda2\nUUID=6bbfba42-07ec-479a-b9fa-d3e89e94af9f\tnone      \tswap      \tdefaults,pri=-2\t0 0\n\n# \/dev\/sdb1\nUUID=7d546d07-1049-4a4a-92a4-152d1c7ba854       \/data           ext4            defaults                         0 0\n```\n\n我们已经把这块硬盘挂载到了\/data目录下了。 \n";
+		markdown("markdown");
+	</script>
+</main>
+</div>
+    <footer>
+        <span>ClarkQAQ - ♥</span>
+        <div>友情链接:
+        <a href="http://blog.claraqwq.com/" target="_blank" title="ClaraQWQ的博客">Clara</a>
+		</div>
+        <div class="powered_by">
+            <span>© CopyRight</span>
+            <a href="http://clarkabe.top" target="_blank">ClarkQAQ</a>
+            <a href="#" target="_blank">Fantasy</a>
+        </div>
+        <div class="footer_slogan">
+        </div>
+    </footer>
+
+    <script>
+		(function() {
+			var OriginTitle = document.title;
+			var titleTime;
+			document.addEventListener('visibilitychange', function () {
+				if (document.hidden) {
+					document.title = "喔唷,崩溃啦!";
+					clearTimeout(titleTime);
+				}else {
+					document.title = "诶!=w=又好了!";
+					titleTime = setTimeout(function () {
+						document.title = OriginTitle;
+					}, 2000);
+				}
+			});
+		 }());
+    </script>
+</body>
+</html>
